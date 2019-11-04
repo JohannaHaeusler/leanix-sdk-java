@@ -1,29 +1,33 @@
 package net.leanix.api.common.auth;
 
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import org.glassfish.jersey.internal.util.Base64;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.leanix.api.common.ApiException;
 import net.leanix.api.common.Pair;
 import net.leanix.api.common.responses.AccessTokenResponse;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
 public class ClientCredentialRefreshingOAuth extends OAuth {
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
+    private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     private boolean accessTokenSetManually = false;
 
-    Client jerseyClient;
-    URI tokenUrl;
-    AccessTokenResponse accessTokenResponse;
+    private OkHttpClient okClient;
+    private URI tokenUrl;
+    private AccessTokenResponse accessTokenResponse;
 
     private String clientId;
     private String clientSecret;
@@ -34,8 +38,8 @@ public class ClientCredentialRefreshingOAuth extends OAuth {
         this.tokenUrl = tokenUrl;
     }
 
-    public void setClient(Client jerseyClient) {
-        this.jerseyClient = jerseyClient;
+    public void setClient(OkHttpClient okClient) {
+        this.okClient = okClient;
     }
 
     @Override
@@ -65,15 +69,23 @@ public class ClientCredentialRefreshingOAuth extends OAuth {
         String basicAuthorizationHeader = buildBasicAuthorizationHeader();
 
         try {
-            accessTokenResponse = jerseyClient
-                    .target(tokenUrl)
-                    .queryParam("grant_type", "client_credentials")
-                    .request()
-                    .accept(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
-                    .header(HttpHeaders.AUTHORIZATION, basicAuthorizationHeader)
-                    .post(null, AccessTokenResponse.class);
-        } catch (RuntimeException ex) {
+            HttpUrl parsedUrl = HttpUrl.parse(tokenUrl.toString());
+            if(parsedUrl == null) {
+                throw new RuntimeException("Could not parse Url '" + tokenUrl + "'!");
+            }
+            HttpUrl url = parsedUrl.newBuilder().addQueryParameter("grant_type", "client_credentials").build();
+            Request req = new Request.Builder()
+                .url(url)
+                .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
+                .addHeader(HttpHeaders.AUTHORIZATION, basicAuthorizationHeader)
+                .method("POST", null).build();
+            ObjectMapper objectMapper = new ObjectMapper();
+            ResponseBody responseBody = okClient.newCall(req).execute().body();
+            if (responseBody == null) {
+                throw new RuntimeException("Response body was empty!");
+            }
+            accessTokenResponse = objectMapper.readValue(responseBody.string(), AccessTokenResponse.class);
+        } catch (RuntimeException | IOException ex) {
             throw new ApiException("Failed to retrieve a new oauth token from " + tokenUrl, ex, 0, null);
         }
     }
@@ -84,7 +96,7 @@ public class ClientCredentialRefreshingOAuth extends OAuth {
         String userAndPw = sb.toString();
 
         sb.setLength(0);
-        sb.append("Basic ").append(Base64.encodeAsString(userAndPw.getBytes(UTF8)));
+        sb.append("Basic ").append(Base64.getEncoder().encodeToString(userAndPw.getBytes(UTF8)));
         return sb.toString();
     }
 

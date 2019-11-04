@@ -2,16 +2,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.leanix</groupId>
-    <artifactId>leanix-sdk-java</artifactId>
+    <groupId>org.txture</groupId>
+    <artifactId>txture-leanix-sdk-java</artifactId>
     <packaging>jar</packaging>
 
     <version>3.9.26</version>
 
     <parent>
         <groupId>net.leanix.poms</groupId>
-        <artifactId>sdk-parent</artifactId>
-        <version>0.10.2</version>
+        <artifactId>common-parent</artifactId>
+        <version>2.0.1</version>
         <relativePath />
     </parent>
 
@@ -47,6 +47,8 @@
     </developers>
 
     <properties>
+        <dropwizard.version>1.3.15</dropwizard.version>
+        <swagger-core-version>1.5.23</swagger-core-version>
         <downloadSources>true</downloadSources>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -54,10 +56,110 @@
         <leanix-dropkit-sdk-utils-version>1.0.3</leanix-dropkit-sdk-utils-version>
         <codegenHost>app.leanix.net</codegenHost>
         <swagger-inputSpec>https://${codegenHost}/services/pathfinder/v1/api-docs/</swagger-inputSpec>
-
+        <sdk-name>txture-leanix-sdk-java</sdk-name>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.dropwizard</groupId>
+                <artifactId>dropwizard-bom</artifactId>
+                <version>${dropwizard.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <distributionManagement>
+        <site>
+            <id>s3.site</id>
+            <url>s3://txture-leanix-sdk/site</url>
+        </site>
+        <repository>
+            <id>s3.release</id>
+            <url>s3://txture-leanix-sdk/release</url>
+        </repository>
+        <snapshotRepository>
+            <id>s3.snapshot</id>
+            <url>s3://txture-leanix-sdk/snapshot</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <dependencies>
+
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>2.3.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>${swagger-core-version}</version>
+        </dependency>
+        <!--  JSON processing: jackson  -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <!--  Base64 encoding that works in both JVM and Android  -->
+        <dependency>
+            <groupId>com.brsanthu</groupId>
+            <artifactId>migbase64</artifactId>
+            <version>2.2</version>
+        </dependency>
+        <!--  Test scopes  -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--
+         redirect java.util.logging used in libraries to slf4j. You should configure logback to use a LevelChangePropagator to
+                    prevent drastic performance loss!
+        -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <!--  <version>2.2.0</version>  -->
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -65,11 +167,30 @@
             <version>2.8.7</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.2.2</version>
+        </dependency>
+
         <!-- Testing -->
 
     </dependencies>
 
     <build>
+        <extensions>
+            <extension>
+<!--                <groupId>org.springframework.build</groupId>-->
+<!--                <artifactId>aws-maven</artifactId>-->
+<!--                <version>5.0.0.RELEASE</version>-->
+                <groupId>com.gkatzioura.maven.cloud</groupId>
+                <artifactId>s3-storage-wagon</artifactId>
+                <version>1.0</version>
+<!--                <groupId>org.kuali.maven.wagons</groupId>-->
+<!--                <artifactId>maven-s3-wagon</artifactId>-->
+<!--                <version>1.2.1</version>-->
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -84,6 +205,35 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.8.1</version>
+            </plugin>
+            <plugin>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-codegen-maven-plugin</artifactId>
+                <version>2.2.3</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory> ${project.build.directory}/lib </outputDirectory>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
@@ -129,9 +279,6 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
-                        <configuration>
-                            <additionalparam>-Xdoclint:none</additionalparam>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -139,6 +286,135 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>codegen</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-clean-plugin</artifactId>
+                        <configuration>
+                            <filesets>
+                                <fileset>
+                                    <!--
+                                     presume only generated sources have been copied here, so delete them on a clean in this profile
+                                    -->
+                                    <directory>src/main/java/net/leanix</directory>
+                                    <includes>
+                                        <include>**/*</include>
+                                    </includes>
+                                </fileset>
+                                <fileset>
+                                    <!--
+                                     presume only generated test sources have been copied here, so delete them on a clean in this
+                                                                            profile
+                                    -->
+                                    <directory>src/test/java/net/leanix</directory>
+                                    <includes>
+                                        <include>**/*</include>
+                                    </includes>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </plugin>
+                    <!--  1.) Generate sdk code with swagger's codegen tool  -->
+                    <plugin>
+                        <groupId>io.swagger</groupId>
+                        <artifactId>swagger-codegen-maven-plugin</artifactId>
+                        <version>2.2.3</version>
+                        <configuration>
+                            <inputSpec>${swagger-inputSpec}</inputSpec>
+                            <language>java</language>
+                            <apiPackage>net.leanix.${sdk-name}.api</apiPackage>
+                            <modelPackage>net.leanix.${sdk-name}.api.models</modelPackage>
+                            <addCompileSourceRoot>false</addCompileSourceRoot>
+                            <configOptions>
+                                <groupId>net.leanix</groupId>
+                                <artifactId>leanix-${sdk-name}-sdk-java</artifactId>
+                                <invokerPackage>net.leanix.dropkit.apiclient</invokerPackage>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                                <library>jersey2</library>
+                                <dateLibrary>java8</dateLibrary>
+                                <type-mappings>DateTime=Instant,date=LocalDate</type-mappings>
+                                <import-mappings>
+                                    Instant=java.time.Instant,LocalDate=java.time.LocalDate
+                                </import-mappings>
+                            </configOptions>
+                            <!--
+                             used to get help from cli that describes possible configOptions
+                            -->
+                            <!-- configHelp>true</configHelp  -->
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!--
+                     2.) Replace some generated classes and add additional stuff here which comes from the dropkit-sdk-utils artifact
+                    -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.10</version>
+                        <executions>
+                            <execution>
+                                <id>getAdaptedJavaSources</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>net.leanix</groupId>
+                                            <artifactId>leanix-dropkit-sdk-utils</artifactId>
+                                            <version>${leanix-dropkit-sdk-utils-version}</version>
+                                            <type>jar</type>
+                                            <overWrite>true</overWrite>
+                                            <outputDirectory>${project.build.directory}/adapted-sources</outputDirectory>
+                                            <includes>java/**/*.java</includes>
+                                        </artifactItem>
+                                    </artifactItems>
+                                    <includes>**/*.java</includes>
+                                    <excludes>**/*.properties</excludes>
+                                    <overWriteReleases>true</overWriteReleases>
+                                    <overWriteSnapshots>true</overWriteSnapshots>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!--
+                     3.) copy swagger's generated sources + adapted sources into /src/main/java folder
+                    -->
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <phase>generate-sources</phase>
+                                <configuration>
+                                    <target>
+                                        <copy todir="src" overwrite="true">
+                                            <fileset dir="target/generated-sources/swagger/src" includes="**"/>
+                                        </copy>
+                                        <copy todir="src/main" overwrite="true">
+                                            <fileset dir="target/adapted-sources" includes="**"/>
+                                        </copy>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>performTests</id>
             <activation>
@@ -153,70 +429,6 @@
                         <configuration>
                             <skipTests>false</skipTests>
                         </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>codegen</id>
-            <build>
-                <plugins>
-                    <!-- 1) generate api using the swagger-codegen-maven-plugin -->
-                    <plugin>
-                        <groupId>io.swagger</groupId>
-                        <artifactId>swagger-codegen-maven-plugin</artifactId>
-                        <version>2.2.2</version>
-                        <configuration>
-                            <inputSpec>${swagger-inputSpec}</inputSpec>
-                            <language>java</language>
-                            <apiPackage>net.leanix.api</apiPackage>
-                            <modelPackage>net.leanix.api.models</modelPackage>
-                            <addCompileSourceRoot>false</addCompileSourceRoot>
-                            <configOptions>
-                                <groupId>net.leanix</groupId>
-                                <artifactId>leanix-sdk-java</artifactId>
-                                <invokerPackage>net.leanix.api.common</invokerPackage>
-                                <library>jersey2</library>
-                                <dateLibrary>java8</dateLibrary>
-                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
-                                <type-mappings>DateTime=Instant,date=LocalDate</type-mappings>
-                                <import-mappings>Instant=java.time.Instant,LocalDate=java.time.LocalDate</import-mappings>
-                            </configOptions>
-                            <!-- used to get help from cli that describes possible configOptions -->
-                            <!-- configHelp>true</configHelp -->
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>generate</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- 2.) copy swagger's generated sources + adapted sources into /src/main/java folder -->
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.8</version>
-                        <executions>
-                            <execution>
-                                <phase>process-sources</phase>
-                                <configuration>
-                                    <target>
-                                        <copy todir="src" overwrite="true">
-                                            <fileset dir="target/generated-sources/swagger/src" includes="**" />
-                                        </copy>
-                                        <copy todir="src/main/java" overwrite="true">
-                                            <fileset dir="src/main/resources/codegen-templates" includes="**" />
-                                        </copy>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
                     </plugin>
                 </plugins>
             </build>

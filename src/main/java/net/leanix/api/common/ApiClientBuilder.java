@@ -38,7 +38,6 @@ public class ApiClientBuilder {
 
         ApiClient apiClient = new ApiClient();
 
-        apiClient.setDebugging(debugging);
         if (apiToken != null && !apiToken.isEmpty()) {
             apiClient.setApiToken(apiToken, oauth2TokenUri);
         } else if (clientId != null && clientSecret != null) {

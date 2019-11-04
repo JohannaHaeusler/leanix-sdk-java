@@ -50,21 +50,4 @@ public class GraphqlApiTest {
         // TODO: test validations
     }
     
-    /**
-     * processGraphQLMultipart
-     *
-     * Processes GraphQL requests, supporting multipart documents
-     *
-     * @throws ApiException
-     *          if the Api call fails
-     */
-    @Test
-    public void processGraphQLMultipartTest() throws ApiException {
-        String graphQLRequest = null;
-        File file = null;
-        GraphQLResult response = api.processGraphQLMultipart(graphQLRequest, file);
-
-        // TODO: test validations
-    }
-    
 }
